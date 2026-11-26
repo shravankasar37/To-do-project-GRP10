@@ -14,6 +14,16 @@ function emptyTask(): Draft {
 })
 class App {
   api = inject(Api);
+  private readonly themeKey = 'taskfolio.theme';
+  get darkMode() {
+    const theme = document.documentElement.style.colorScheme;
+    return theme ? theme === 'dark' : window.matchMedia('(prefers-color-scheme: dark)').matches;
+  }
+  toggleTheme() {
+    const theme = this.darkMode ? 'light' : 'dark';
+    document.documentElement.style.colorScheme = theme;
+    try { localStorage.setItem(this.themeKey, theme); } catch { /* Storage may be disabled. */ }
+  }
   private titleInput = viewChild<ElementRef<HTMLInputElement>>('titleInput');
   register = false;
   showPassword = false;
@@ -34,6 +44,10 @@ class App {
   get admin() { return this.api.session?.user.role === 'admin'; }
   get otherUsers() { return this.users.filter(user => user.id !== this.api.session?.user.id); }
   ngOnInit() {
+    try {
+      const theme = localStorage.getItem(this.themeKey);
+      if (theme === 'dark' || theme === 'light') document.documentElement.style.colorScheme = theme;
+    } catch { /* Use the system preference when storage is unavailable. */ }
     if (this.api.session) void this.reload();
   }
   get completed() { return this.tasks.filter(t => t.status === 'completed').length; }

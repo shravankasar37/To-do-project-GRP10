@@ -8,6 +8,7 @@
     <div class="account">
 
         <span class="account-name">{{api.session.user.name}}</span>
+        <button class="theme-toggle" type="button" aria-label="Dark mode" [attr.aria-pressed]="darkMode" (click)="toggleTheme()"><span aria-hidden="true">{{darkMode ? '☀' : '☾'}}</span></button>
         <button [disabled]="busy" (click)="logout()">Sign out</button>
 
     </div>
@@ -18,6 +19,7 @@
 @if (error) { <p role="alert">{{error}}</p> }
 @if (notice || busy) { <p role="status">{{busy ? 'Please wait…' : notice}}</p> }
 @if (!api.session) {
+  <div class="auth-theme"><button type="button" class="theme-toggle" aria-label="Dark mode" [attr.aria-pressed]="darkMode" (click)="toggleTheme()">{{darkMode ? '☀ Light mode' : '☾ Dark mode'}}</button></div>
   <section class="auth">
     <div class="cover">
       <strong class="cover-title">Taskfolio</strong>
