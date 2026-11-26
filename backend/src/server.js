@@ -53,5 +53,8 @@ if (production) {
   await app.register(staticFiles, {
     root: fileURLToPath(new URL('../../frontend/dist/todo/browser/', import.meta.url))
   });
+  for (const path of ['/login', '/admin/login']) {
+    app.get(path, (_request, reply) => reply.sendFile('index.html'));
+  }
 }
 await app.listen({ port: Number(process.env.PORT) || 5000, host: production ? '0.0.0.0' : 'localhost' });

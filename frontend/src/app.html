@@ -33,8 +33,8 @@
         </ul>
       </div>
     </div>
-    <div class="auth-body"><h1>{{register ? 'Create an account' : 'Sign in'}}</h1>
-  <p class="intro">{{register ? 'Create your login to start adding tasks.' : 'Sign in to your task dashboard.'}}</p>
+    <div class="auth-body"><h1>{{register ? 'Create an account' : adminPortal ? 'Admin sign in' : 'User sign in'}}</h1>
+  <p class="intro">{{register ? 'Create your login to start adding tasks.' : adminPortal ? 'Manage accounts and review all tasks.' : 'Sign in to your task dashboard.'}}</p>
   <form #auth="ngForm" (ngSubmit)="signIn(auth)">
     @if (register) {
       <div class="auth-field">
@@ -71,7 +71,12 @@
     }
     <button class="primary" [disabled]="busy">{{register ? 'Register' : 'Sign in'}}</button>
   </form>
-  <button class="text-button" [disabled]="busy" (click)="switchAuth(auth)">{{register ? 'Back to sign in' : 'Create an account'}}</button></div></section>
+  <div class="portal-links">
+    @if (!adminPortal) {
+      <button class="text-button" [disabled]="busy" (click)="switchAuth(auth)">{{register ? 'Back to sign in' : 'Create an account'}}</button>
+    }
+    <a [href]="adminPortal ? '/login' : '/admin/login'">{{adminPortal ? 'Back to user sign in' : 'Admin sign in'}}</a>
+  </div></div></section>
 } @else {
   <div class="dashboard-heading"><h1>{{admin ? 'Admin dashboard' : 'My tasks'}}</h1>
     @if (!admin && loaded) { <button class="primary" [disabled]="busy" (click)="editing !== undefined && resetForm(); openEditor()">+ Add task</button> }

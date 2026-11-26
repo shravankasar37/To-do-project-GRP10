@@ -96,6 +96,9 @@ button:disabled { opacity: .58; cursor: default; }
 .password-control button { position: absolute; inset: 1px 1px 1px auto; min-height: 0; border: 0; background: transparent; color: var(--accent); }
 .text-button { margin-top: 1rem; border: 0; padding-inline: 0; background: transparent; color: var(--accent); text-decoration: underline; text-underline-offset: .2rem; }
 .auth .password-control button:hover:enabled, .auth .text-button:hover:enabled { background: transparent; }
+.portal-links { display: flex; align-items: center; flex-wrap: wrap; gap: .4rem 1.25rem; margin-top: 1rem; }
+.portal-links .text-button { margin-top: 0; }
+.portal-links a { color: var(--accent); font-size: .9rem; font-weight: 600; text-underline-offset: .2rem; }
 .dashboard-heading { display: flex; align-items: center; justify-content: space-between; gap: 1rem; margin-bottom: 1.5rem; }
 .dashboard-heading h1 { margin: 0; }
 .dashboard-heading button { flex: none; }

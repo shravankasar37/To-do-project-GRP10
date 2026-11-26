@@ -34,7 +34,10 @@ export default async function authRoutes(app) {
       body: {
         type: 'object',
         required: ['email', 'password'],
-        properties: { email: { type: 'string' }, password: { type: 'string' } }
+        properties: {
+          email: { type: 'string' }, password: { type: 'string' },
+          portal: { type: 'string', enum: ['user', 'admin'], default: 'user' }
+        }
       }
     }
   }, async (request, reply) => {
@@ -48,6 +51,10 @@ export default async function authRoutes(app) {
     }
     if (!user.is_active) {
       return reply.code(403).send({ message: 'Your account is inactive. Contact the admin.' });
+    }
+    if (request.body.portal !== user.role) {
+      return reply.code(403).send({ message: user.role === 'admin'
+        ? 'Use Admin sign in for this account.' : 'This account does not have admin access. Use User sign in.' });
     }
     const token = app.jwt.sign({ id: user.id, role: user.role });
     return { token, user: { id: user.id, name: user.name, email: user.email, role: user.role } };

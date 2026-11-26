@@ -45,8 +45,8 @@ export class Api {
     return firstValueFrom(this.http.post('/api/auth/register', {name, email, password}));
   }
 
-  async login(email: string, password: string) {
-    const result = await firstValueFrom(this.http.post<Session>('/api/auth/login', {email, password}));
+  async login(email: string, password: string, portal: SessionUser['role']) {
+    const result = await firstValueFrom(this.http.post<Session>('/api/auth/login', {email, password, portal}));
     if (!validSession(result)) {
       throw new Error('The login response is missing a token or a recognised role.');
     }

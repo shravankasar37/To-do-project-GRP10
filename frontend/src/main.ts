@@ -26,6 +26,7 @@ class App {
   }
   private titleInput = viewChild<ElementRef<HTMLInputElement>>('titleInput');
   register = false;
+  readonly adminPortal = window.location.pathname === '/admin/login';
   showPassword = false;
   confirmation = '';
   editorOpen = false;
@@ -123,7 +124,7 @@ class App {
         this.switchAuth(form);
         this.notice = 'Account created. Sign in to open your dashboard.';
       } else {
-        await this.api.login(this.email.trim(), this.password);
+        await this.api.login(this.email.trim(), this.password, this.adminPortal ? 'admin' : 'user');
         this.showPassword = false;
         this.password = '';
         await this.refresh();
