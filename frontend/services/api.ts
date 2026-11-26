@@ -2,7 +2,8 @@ import { Injectable, inject } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { firstValueFrom } from 'rxjs';
 
-interface SessionUser { id: number; name: string; email: string; role: 'user' | 'admin' }
+export type Permission = 'view_tasks' | 'view_users';
+interface SessionUser { permissions?: Permission[]; portal?: 'user' | 'admin'; id: number; name: string; email: string; role: 'user' | 'admin' }
 export interface User extends SessionUser { is_active: boolean }
 export interface Draft {
   title: string;
@@ -50,8 +51,8 @@ export class Api {
     if (!validSession(result)) {
       throw new Error('The login response is missing a token or a recognised role.');
     }
-    const {id, name, role} = result.user;
-    this.session = {token: result.token, user: {id, name, email: result.user.email, role}};
+    const {id, name, role, permissions} = result.user;
+    this.session = {token: result.token, user: {id, name, email: result.user.email, role, permissions, portal}};
     try { sessionStorage.setItem(sessionKey, JSON.stringify(this.session)); }
     catch { /* The current page still works when storage is unavailable. */ }
   }
@@ -72,6 +73,9 @@ export class Api {
   deleteTask(id: number) { return this.request('DELETE', '/tasks/' + id); }
   setTaskStatus(id: number, status: Task['status']) { return this.request('PATCH', '/tasks/' + id, {status}); }
   renameUser(id: number, name: string) { return this.request('PATCH', '/admin/users/' + id, {name}); }
+  setPrivileges(id: number, role: User['role'], permissions: Permission[]) {
+    return this.request('PATCH', '/admin/users/' + id, {role, permissions});
+  }
   setUserActive(id: number, active: boolean) {
     return this.request('PATCH', '/admin/users/' + id, {is_active: active});
   }

@@ -20,11 +20,14 @@ app.decorate('authenticate', async (request, reply) => {
   } catch {
     return reply.code(401).send({ message: 'Please sign in again.' });
   }
-  const { rows } = await pool.query('SELECT role, is_active FROM users WHERE id = $1', [request.user.id]);
+  const { rows } = await pool.query('SELECT role, permissions, is_active FROM users WHERE id = $1', [request.user.id]);
   if (!rows[0] || !rows[0].is_active) {
     return reply.code(401).send({ message: 'Your account is inactive. Contact the admin.' });
   }
-  request.user.role = rows[0].role; // always use the latest role from the database
+  if (request.user.role !== rows[0].role ||
+      JSON.stringify(request.user.permissions ?? []) !== JSON.stringify(rows[0].permissions)) {
+    return reply.code(401).send({message: 'Your access changed. Please sign in again.'});
+  }
 });
 
 // Only lets admins through (use after authenticate).

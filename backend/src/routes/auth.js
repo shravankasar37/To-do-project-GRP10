@@ -42,7 +42,7 @@ export default async function authRoutes(app) {
     }
   }, async (request, reply) => {
     const { rows } = await pool.query(
-      'SELECT id, name, email, role, is_active, password_hash FROM users WHERE LOWER(email) = LOWER($1)',
+      'SELECT id, name, email, role, permissions, is_active, password_hash FROM users WHERE LOWER(email) = LOWER($1)',
       [request.body.email.trim()]
     );
     const user = rows[0];
@@ -52,11 +52,14 @@ export default async function authRoutes(app) {
     if (!user.is_active) {
       return reply.code(403).send({ message: 'Your account is inactive. Contact the admin.' });
     }
-    if (request.body.portal !== user.role) {
+    const delegatedLogin = request.body.portal === 'admin' && user.permissions.length > 0;
+    if (request.body.portal !== user.role && !delegatedLogin) {
       return reply.code(403).send({ message: user.role === 'admin'
         ? 'Use Admin sign in for this account.' : 'This account does not have admin access. Use User sign in.' });
     }
-    const token = app.jwt.sign({ id: user.id, role: user.role });
-    return { token, user: { id: user.id, name: user.name, email: user.email, role: user.role } };
+    const {id, name, email, role, permissions} = user;
+    const portal = request.body.portal;
+    const token = app.jwt.sign({id, role, permissions, portal});
+    return {token, user: {id, name, email, role, permissions, portal}};
   });
 }

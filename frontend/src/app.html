@@ -19,7 +19,6 @@
 @if (error) { <p role="alert">{{error}}</p> }
 @if (notice || busy) { <p role="status">{{busy ? 'Please wait…' : notice}}</p> }
 @if (!api.session) {
-  <div class="auth-theme"><button type="button" class="theme-toggle" aria-label="Dark mode" [attr.aria-pressed]="darkMode" (click)="toggleTheme()">{{darkMode ? '☀ Light mode' : '☾ Dark mode'}}</button></div>
   <section class="auth">
     <div class="cover">
       <strong class="cover-title">Taskfolio</strong>
@@ -33,7 +32,9 @@
         </ul>
       </div>
     </div>
-    <div class="auth-body"><h1>{{register ? 'Create an account' : adminPortal ? 'Admin sign in' : 'User sign in'}}</h1>
+    <div class="auth-body"><div class="auth-heading"><h1>{{register ? 'Create an account' : adminPortal ? 'Admin sign in' : 'User sign in'}}</h1>
+    <button type="button" class="theme-toggle" aria-label="Dark mode" [attr.aria-pressed]="darkMode"
+      [title]="darkMode ? 'Switch to light mode' : 'Switch to dark mode'" (click)="toggleTheme()">{{darkMode ? '☀' : '☾'}}</button></div>
   <p class="intro">{{register ? 'Create your login to start adding tasks.' : adminPortal ? 'Manage accounts and review all tasks.' : 'Sign in to your task dashboard.'}}</p>
   <form #auth="ngForm" (ngSubmit)="signIn(auth)">
     @if (register) {
@@ -83,15 +84,17 @@
   </div>
   @if (!loaded && !busy) { <button (click)="reload()">Retry loading dashboard</button> }
   @if (loaded) {
-    @if (!tasksUnavailable) {
+    @if (canViewTasks && !tasksUnavailable) {
     <dl class="stats" aria-label="Task statistics">
       <div><dt>Total tasks</dt><dd>{{tasks.length}}</dd></div>
       <div><dt>Pending</dt><dd>{{tasks.length - completed}}</dd></div>
       <div><dt>Completed</dt><dd>{{completed}}</dd></div>
+    <div class="overdue-stat"><dt>Overdue</dt><dd>{{overdue}}</dd></div>
     </dl>
     }
-    <div class="workspace" [class.admin]="admin">
+    <div class="workspace" [class.admin]="admin" [class.single-panel]="admin && (!canViewTasks || !canViewUsers)">
     @if (admin) {
+      @if (canViewUsers) {
       <section><h2>Registered users</h2>
       @if (usersUnavailable) {
         <p role="alert">The user list could not be loaded.</p>
@@ -100,11 +103,27 @@
       @for (u of otherUsers; track u.id) {
         <article><div><strong>{{u.name}}</strong><p>{{u.email}} · {{u.role}}</p></div>
                 <div class="actions"><span class="account-status" [class.active]="u.is_active">{{u.is_active === true ? 'Active' : u.is_active === false ? 'Inactive' : 'Status unavailable'}}</span>
-        <button [disabled]="busy || tasksUnavailable" (click)="ownerId = u.id; filter = 'all'; query = ''; listHeading.focus()">View tasks</button>
+        @if (canViewTasks) { <button [disabled]="busy || tasksUnavailable" (click)="ownerId = u.id; filter = 'all'; query = ''; listHeading.focus()">View tasks</button> }
+        @if (fullAdmin) {
+        <button [disabled]="busy" (click)="editAccess(u)">Manage access</button>
         <button [disabled]="busy" (click)="renamingId = u.id; displayName = u.name; deactivatingId = undefined">Edit name</button>
         @if (u.id !== api.session.user.id && u.is_active != null) {
           <button [disabled]="busy" (click)="u.is_active ? (deactivatingId = u.id) : changeAccess(u); renamingId = undefined">{{u.is_active ? 'Deactivate' : 'Activate'}}</button>
-        }</div>
+        } }</div>
+        @if (accessId === u.id && fullAdmin) {
+          <form class="account-edit" (ngSubmit)="saveAccess(u)">
+            <label>Access for {{u.email}}
+              <select name="accessLevel" [(ngModel)]="accessLevel" [disabled]="busy">
+                <option value="user">Personal tasks only</option><option value="view_tasks">View all tasks</option>
+                <option value="view_users">View registered users</option><option value="both">View tasks and users</option>
+                <option value="admin">Full administrator</option>
+              </select>
+            </label>
+            <small>{{accessLevel === 'admin' ? 'Can manage accounts and grant or revoke access for others.' : accessLevel === 'user' ? 'Removes all admin portal access.' : 'Read-only access to the selected admin sections.'}}</small>
+            <div class="actions"><button class="primary" [disabled]="busy">Save access</button>
+              <button type="button" [disabled]="busy" (click)="accessId = undefined">Cancel</button></div>
+          </form>
+        }
         @if (renamingId === u.id) {
           <form class="account-edit" (ngSubmit)="rename(u)">
             <label>Display name<input name="displayName" required maxlength="100" [(ngModel)]="displayName" [disabled]="busy"></label>
@@ -120,6 +139,7 @@
       } @empty { <p>No other accounts have registered yet.</p> }
       }
       </section>
+      }
     } @else {
       <section class="editor" [class.open]="editorOpen"><h2>{{editing === undefined ? 'Add task' : 'Edit task'}}</h2>
       <form #taskForm="ngForm" (ngSubmit)="save()">
@@ -131,19 +151,19 @@
         @if (editorOpen) { <button type="button" [disabled]="busy" (click)="resetForm()">Cancel</button> }</div>
       </form></section>
     }
-    <section class="task-list"><h2 tabindex="-1" #listHeading>{{admin ? 'All tasks' : 'Task list'}}</h2>
+    <section class="task-list" [hidden]="!canViewTasks"><h2 tabindex="-1" #listHeading>{{admin ? 'All tasks' : 'Task list'}}</h2>
     @if (tasksUnavailable) {
       <p role="alert">Tasks and statistics could not be loaded.</p>
       <button [disabled]="busy" (click)="reload()">Retry loading tasks</button>
     } @else {
     <div class="filters" role="group" aria-label="Task status">
-      @for (status of ['all', 'pending', 'completed']; track status) {
+      @for (status of ['all', 'pending', 'completed', 'overdue']; track status) {
         <button type="button" [attr.aria-pressed]="filter === status" (click)="filter = status">{{status}}</button>
       }
     </div>
     <div class="row">
       <label>Search by title<input type="search" [(ngModel)]="query"></label>
-      @if (admin && !usersUnavailable) {
+      @if (admin && canViewUsers && !usersUnavailable) {
         <label>Task owner<select name="owner" [(ngModel)]="ownerId">
           <option [ngValue]="null">All owners</option>
           @for (owner of users; track owner.id) {
@@ -190,7 +210,8 @@
       </div>
     }
     }
-    </section></div>
+    </section>
+</div>
   }
 }
 </main>

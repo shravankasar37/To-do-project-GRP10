@@ -96,3 +96,9 @@ FROM tasks;
 | admin@todo.test | Admin@123 | admin |
 | riya@todo.test | User@123 | user |
 | aman@todo.test | User@123 | user |
+
+### Update an existing database for delegated access
+
+Run `database/migrations/001_admin_permissions.sql` once before deploying the access-management update. It preserves accounts and tasks. Fresh installations using the current schema already include the permissions column.
+
+Full admins can use **Registered users ? Manage access** to grant access to all tasks, the user directory, both read-only sections, or full administration. Select **Personal tasks only** to revoke admin portal access. Access changes require the affected account to sign in again on its next protected request.

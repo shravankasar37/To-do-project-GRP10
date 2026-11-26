@@ -3,7 +3,7 @@ import { bootstrapApplication } from '@angular/platform-browser';
 import { provideHttpClient, HttpErrorResponse } from '@angular/common/http';
 import { DatePipe } from '@angular/common';
 import { FormsModule, NgForm } from '@angular/forms';
-import { Api, Draft, Task, User } from '../services/api';
+import { Api, Draft, Permission, Task, User } from '../services/api';
 
 function emptyTask(): Draft {
   return {title: '', description: '', priority: 'medium', due_date: null, status: 'pending'};
@@ -42,7 +42,28 @@ class App {
   ownerLabels = new Map<number, string>();
   sort = 'default';
   draft = emptyTask(); editing?: number;
-  get admin() { return this.api.session?.user.role === 'admin'; }
+  accessId?: number;
+  accessLevel = 'user';
+  get fullAdmin() { return this.api.session?.user.role === 'admin'; }
+  get admin() { return this.fullAdmin || this.api.session?.user.portal === 'admin'; }
+  get canViewTasks() { return !this.admin || this.fullAdmin || this.api.session?.user.permissions?.includes('view_tasks'); }
+  get canViewUsers() { return this.fullAdmin || this.api.session?.user.permissions?.includes('view_users'); }
+  editAccess(user: User) {
+    this.accessId = user.id;
+    this.accessLevel = user.role === 'admin' ? 'admin' : user.permissions?.length === 2 ? 'both' : user.permissions?.[0] || 'user';
+    this.renamingId = undefined;
+    this.deactivatingId = undefined;
+  }
+  saveAccess(user: User) {
+    const permissions: Permission[] = this.accessLevel === 'both' ? ['view_tasks', 'view_users']
+      : this.accessLevel === 'view_tasks' || this.accessLevel === 'view_users' ? [this.accessLevel] : [];
+    return this.run(async () => {
+      await this.api.setPrivileges(user.id, this.accessLevel === 'admin' ? 'admin' : 'user', permissions);
+      this.accessId = undefined;
+      await this.refresh();
+      this.notice = 'Access updated for ' + user.name + '.';
+    });
+  }
   get otherUsers() { return this.users.filter(user => user.id !== this.api.session?.user.id); }
   ngOnInit() {
     try {
@@ -52,8 +73,9 @@ class App {
     if (this.api.session) void this.reload();
   }
   get completed() { return this.tasks.filter(t => t.status === 'completed').length; }
+  get overdue() { return this.tasks.filter(t => this.daysUntilDue(t) < 0).length; }
   get visible() {
-    const matches = this.tasks.filter(t => (this.filter === 'all' || t.status === this.filter)
+    const matches = this.tasks.filter(t => (this.filter === 'all' || t.status === this.filter || (this.filter === 'overdue' && this.daysUntilDue(t) < 0))
       && (this.ownerId === null || t.user_id === this.ownerId)
       && t.title.toLowerCase().includes(this.query.trim().toLowerCase()));
     if (this.sort === 'due') {
@@ -82,7 +104,7 @@ class App {
       this.loaded = true;
       return;
     }
-    const [tasks, users] = await Promise.allSettled([this.api.allTasks(), this.api.users()]);
+    const [tasks, users] = await Promise.allSettled([this.canViewTasks ? this.api.allTasks() : [], this.canViewUsers ? this.api.users() : []]);
     for (const result of [tasks, users]) {
       if (result.status === 'rejected' && result.reason instanceof HttpErrorResponse && result.reason.status === 401) {
         throw result.reason;
@@ -137,11 +159,14 @@ class App {
     this.editorOpen = true;
     requestAnimationFrame(() => this.titleInput()?.nativeElement.focus());
   }
-  dueLabel(t: Task) {
-    if (!t.due_date || t.status === 'completed') return '';
+  daysUntilDue(t: Task) {
+    if (!t.due_date || t.status === 'completed') return Infinity;
     const now = new Date();
     const today = Date.UTC(now.getFullYear(), now.getMonth(), now.getDate());
-    const days = (Date.parse(t.due_date.slice(0, 10) + 'T00:00:00Z') - today) / 86400000;
+    return (Date.parse(t.due_date.slice(0, 10) + 'T00:00:00Z') - today) / 86400000;
+  }
+  dueLabel(t: Task) {
+    const days = this.daysUntilDue(t);
     if (days < 0) return Math.abs(days) + (days === -1 ? ' day overdue' : ' days overdue');
     if (days === 0) return 'Due today';
     return days === 1 ? 'Due tomorrow' : '';
@@ -190,6 +215,7 @@ class App {
   }
   reload() { return this.run(() => this.refresh()); }
   logout() {
+    this.accessId = undefined;
     this.renamingId = undefined; this.deactivatingId = undefined; this.displayName = '';
     this.ownerLabels.clear(); this.ownerId = null;
     this.api.logout(); this.tasks = []; this.users = []; this.loaded = false;

@@ -20,6 +20,7 @@ CREATE TABLE users (
     id            INTEGER GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
     name          VARCHAR(100) NOT NULL,
     email         VARCHAR(255) NOT NULL,
+    permissions   TEXT[] NOT NULL DEFAULT '{}' CHECK (permissions <@ ARRAY['view_users', 'view_tasks']::text[]),
     password_hash TEXT         NOT NULL,          -- bcrypt hash, never the plain password
     role          VARCHAR(10)  NOT NULL DEFAULT 'user'
                   CHECK (role IN ('user', 'admin')),
