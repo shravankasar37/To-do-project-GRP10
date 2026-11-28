@@ -47,6 +47,26 @@ Use the test logins listed in `database/README.md` (1 admin, 2 users). Never wri
 | TC-38 | Sort Tasks | Change **Sort by** to due date, then to title | Tasks are reordered by due date (earliest first), then alphabetically by title | | Not Run |
 | TC-39 | Short Password | Register with a password of fewer than 6 characters | An error about the password length appears; no account is created | | Not Run |
 
+## New Feature Testing – November 2026
+
+| Test ID | Feature | Steps | Expected Result | Actual Result | Status |
+|---|---|---|---|---|---|
+| TC-40 | Read-only task access | Give a user read-only access to all tasks and log in as that user. | User can view all tasks but cannot modify them. | After granting Riya View all tasks permission and logging in through Admin Sign In, she was able to view tasks created by all users. She could view the tasks but could not modify other users' tasks. | PASS |
+| TC-41 | Read-only user directory | Give a user read-only access to the user directory and log in as that user. | User can view the user directory but cannot manage users. | After granting Riya View registered users permission and logging in through Admin Sign In, she was able to view the Registered Users directory but could not manage users or change their permissions.| PASS |
+| TC-42 | Both read-only permissions | Give a user read-only access to all tasks and the user directory. | User can view both sections but cannot modify or manage them. || PASS |
+| TC-43 | Full admin access | Give a user full admin rights and log in as that user. | User can access full admin features. | After granting Full Administrator access, Riya was able to view all users' tasks, access the Registered Users directory, and open Manage Access.| PASS |
+| TC-44 | Personal tasks only | Change a user's access to Personal tasks only and log in as that user. | User can access personal tasks only, without admin sections. | After assigning Personal Tasks Only permission, Riya could view only her own tasks. Tasks belonging to other users were not visible.| PASS|
+| TC-45 | Task preservation | Change a user's access level several times and check their existing tasks. | Existing tasks remain saved after access changes. | After changing Riya's access permissions, all her previously created tasks remained available in her dashboard. No existing tasks were deleted or lost.| PASS|
+| TC-46 | Read-only restrictions | Log in as a read-only user and try to edit or delete a task. |After logging in as Riya with read-only access, she was able to view other users' tasks but could not edit, delete, or mark those tasks as completed. Only the view option was available.” | PASS |
+| TC-47 | Overdue task count | Create a pending task with a past due date. | Overdue count increases correctly. | After creating a pending task with a past due date, the Overdue Tasks count increased correctly by one.| PASS |
+| TC-48 | User overdue filter | Open the user dashboard and select the Overdue filter. | Only overdue pending tasks are displayed. | After selecting the Overdue filter on the User Dashboard, only overdue pending tasks were displayed. Completed tasks and tasks with future due dates were excluded. |PASS |
+| TC-49 | Complete overdue task | Mark an overdue task as completed. | Task disappears from the overdue list and count decreases. | After marking an overdue task as completed, it disappeared from the Overdue list and the Overdue Tasks count decreased by one. | PASS|
+| TC-50 | Future due date | Create a pending task with a future due date. | Task is not counted as overdue. | After creating a pending task with a future due date, the task was not included in the Overdue Tasks list or count.| PASS |
+| TC-51 | Admin overdue count | Open the admin dashboard when overdue tasks exist. | Admin dashboard displays the correct overdue count. | The Admin Dashboard displayed the correct Overdue Tasks count when overdue tasks existed in the application.| PASS |
+| TC-52 | Admin overdue filter | Select the Overdue filter on the admin dashboard. | Only overdue pending tasks are displayed. | After selecting the Overdue filter on the Admin Dashboard, only overdue pending tasks were displayed. Completed tasks and tasks with future due dates were excluded.| PASS |
+| TC-53 | Login theme switch | Open the login page and check the theme switch position. | Theme switch appears beside the form heading. | The theme switch appeared beside the form heading on the Login page, as expected. | PASS |
+| TC-54 | Registration theme switch | Open the registration page and check the theme switch position. | Theme switch appears beside the form heading. | The theme switch appeared beside the form heading on the Registration page, as expected.| PASS|
+| TC-55 | Mobile layout | Open login and registration pages at a mobile-sized browser window. | Forms and theme switch display neatly without overlapping. | The Login and Registration forms and theme switch displayed properly in the mobile-sized browser window. No overlapping or layout issues were observed. | PASS |
 ## How to update this file
 
 - Keep **Actual Result** empty and **Status = Not Run** until you have actually run the test.
